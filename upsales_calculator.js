@@ -1382,12 +1382,17 @@ function getDateRange(period) {
       break;
       
     case 'this_month_to_yesterday':
-      // Початок: перше число поточного місяця, 00:00:00
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-      // Кінець: вчора, 23:59:59
-      endDate = new Date(now);
-      endDate.setDate(endDate.getDate() - 1); // Вчора
-      endDate.setHours(23, 59, 59, 999);
+      if (now.getDate() === 1) {
+        // Сьогодні 1-е число — "вчора" це останній день минулого місяця
+        // Беремо весь попередній місяць
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+      } else {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+        endDate = new Date(now);
+        endDate.setDate(endDate.getDate() - 1);
+        endDate.setHours(23, 59, 59, 999);
+      }
       break;
       
     case 'last_30_days':
