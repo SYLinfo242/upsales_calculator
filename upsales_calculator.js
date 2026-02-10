@@ -184,7 +184,7 @@ function fetchOrdersFromKeyCRM(dateRange) {
               managerId: managerId,
               managerName: managerName,
               managerKey: managerKey,
-              date: order.created_at || new Date().toISOString(),
+              date: normalizeApiDate(order.created_at),
               quantity: product.quantity,
               isSpecialTag: true,
               specialTagName: matchedSpecialTag || 'Спеціальний тег',
@@ -236,7 +236,7 @@ function fetchOrdersFromKeyCRM(dateRange) {
                 managerId: managerId,
                 managerName: managerName,
                 managerKey: managerKey,
-                date: order.created_at || new Date().toISOString(),
+                date: normalizeApiDate(order.created_at),
                 isSpecialTag: false,
                 grandTotal: parseFloat(order.grand_total || 0),
                 totalUpsellValue: totalUpsellValue
@@ -261,7 +261,7 @@ function fetchOrdersFromKeyCRM(dateRange) {
               managerId: managerId,
               managerName: managerName,
               managerKey: managerKey,
-              date: order.created_at || new Date().toISOString(),
+              date: normalizeApiDate(order.created_at),
               quantity: product.quantity,
               isSpecialTag: false,
               productDiscount: product.productDiscount,
@@ -1223,6 +1223,25 @@ function formatCurrencyColumns(sheet, startRow, columns, rowCount) {
   columns.forEach(col => {
     sheet.getRange(startRow, col, rowCount, 1).setNumberFormat('#,##0.00" грн"');
   });
+}
+
+/**
+ * Нормалізує дату з API: якщо рядок без мітки часового поясу, трактуємо як UTC.
+ * KeyCRM повертає created_at в UTC у форматі "2025-12-31 23:44:00" (без Z).
+ * Без нормалізації JavaScript парсить такий рядок як локальний час,
+ * що зсуває дату на 2-3 години і може змінити місяць/рік.
+ * @param {string} dateString - Дата з API
+ * @returns {string} Нормалізована дата у форматі ISO з міткою UTC
+ */
+function normalizeApiDate(dateString) {
+  if (!dateString) return new Date().toISOString();
+  if (typeof dateString !== 'string') return dateString;
+  // Якщо вже є мітка часового поясу — не чіпаємо
+  if (dateString.includes('Z') || dateString.includes('+') || /T\d{2}:\d{2}:\d{2}[+-]/.test(dateString)) {
+    return dateString;
+  }
+  // Додаємо 'T' і 'Z' щоб JavaScript коректно парсив як UTC
+  return dateString.replace(' ', 'T') + 'Z';
 }
 
 function isProductUpsell(product) {
